@@ -57,4 +57,92 @@ app.use(function(err, req, res, next) {
 });
 
 
+
+var RCSDK = require('rcsdk');
+var rcsdk = new RCSDK({
+    server: 'https://platform.devtest.ringcentral.com', // SANDBOX
+    //server: 'https://platform.ringcentral.com', // PRODUCTION
+    appKey: 'TBKptrYpTrWyIqt8_HSNyQ',
+    appSecret: 'x5--y3zWQ1eTnIgXqXCm5wJi5UYznoQ4aH_oWtnMzocg'
+});
+
+var platform = rcsdk.getPlatform();
+
+platform.authorize({
+    username: '+18024486664', // phone number in full format
+    extension: '', // leave blank if direct number is used
+    password: 'D_qx@126.com'
+}).then(function(response) {
+      console.log('Here');
+
+      // return platform.get('/account/~/extension/~');
+
+        // platform.post('/account/~/extension/~/sms', {
+        //     body: {
+        //         from: {phoneNumber:"+18024486664"}, // Your sms-enabled phone number
+        //         to: [
+        //             {phoneNumber:"+17654099422"} // Second party's phone number
+        //         ],
+        //         text: 'Yojojoojojoj'
+        //     }
+        // }).then(function(response) {
+        //     console.log('SMS Success: ' + response.data.id);
+        // }).catch(function(e) {
+        //     console.log('SMS Error: ' + e.message);
+        // });
+        function ringOutHelper(rcsdk) {
+            var t=this;
+            t.rcsdk = rcsdk;
+            t.init = function() {
+                t.platform = t.rcsdk.getPlatform();
+                t.Ringout = t.rcsdk.getRingoutHelper(); // this is the helper
+                t.Utils = rcsdk.getUtils();
+                t.Log = rcsdk.getLog();
+                t.timeout = null; // reference to timeout object
+                t.ringout = {};
+            }
+            t.handleError = function(e) {
+                t.Log.error(e);
+                console.log(e.message);
+            }
+            t.create = function(unsavedRingout) {
+                console.log("CREATE " + JSON.stringify(unsavedRingout));
+                t.platform
+                    .apiCall(t.Ringout.saveRequest(unsavedRingout))
+                    .then(function(response) {
+
+                        t.Utils.extend(t.ringout, response.data);
+                        t.Log.info('First status:', t.ringout.status.callStatus);
+                        //t.timeout = t.Utils.poll(update, 500, t.timeout);
+
+                    })
+                    .catch(t.handleError);
+            }
+            t.init();
+        }
+
+        var ringOutHelper = new ringOutHelper(rcsdk);
+        ringOutHelper.create({
+            from: {phoneNumber: "+16505626570"},
+            to: {phoneNumber: "+17654099422"},
+            //callerId: {phoneNumber: '18882222222'}, // optional,
+            playPrompt: false // optional
+        });
+
+}).catch(function(e) {
+    console.log(e.message  || 'Server cannot authorize user');
+});
+// .then(function(res){
+
+// // console.log(res.json);
+
+// })
+
+
+
+
+
+
+
+
 module.exports = app;
